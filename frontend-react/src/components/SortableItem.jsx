@@ -50,7 +50,7 @@ const SortableItem = ({ item, onRemove }) => {
         </div>
         
         <button
-          className="btn btn-lg btn-outline-danger"
+          className="btn btn-md pt-3 btn-outline-danger"
           onClick={handleRemove}
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}

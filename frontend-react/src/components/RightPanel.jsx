@@ -38,56 +38,56 @@ const RightPanel = ({ selectedIds, order, onDeselectItem, onReorder }) => {
     useEffect(() => {
         const loadItems = async () => {
             if (selectedIds.size === 0) {
-            setItems([]);
-            return;
+                setItems([]);
+                return;
             }
             
             setIsLoading(true);
             
             try {
-            const selectedArray = Array.from(selectedIds);
-            console.log('Загрузка элементов для ID:', selectedArray);
-            
-            const response = await fetch(
-                `http://localhost:3001/api/items/selected?offset=0&limit=100`
-            );
-            
-            if (!response.ok) {
-                throw new Error('Ошибка загрузки');
-            }
-            
-            const data = await response.json();
-            console.log('Получены выбранные элементы:', data.data);
-
-            const filteredItems = data.data.filter(item => 
-                selectedIds.has(item.id)
-            );
-            
-            console.log('Отфильтрованные элементы:', filteredItems);
-
-            const sortedItems = filteredItems.sort((a, b) => {
-                const indexA = order.indexOf(a.id);
-                const indexB = order.indexOf(b.id);
+                const selectedArray = Array.from(selectedIds);
+                console.log('Загрузка элементов для ID:', selectedArray);
                 
-                // Если оба есть в order, сортируем по order
-                if (indexA !== -1 && indexB !== -1) {
-                return indexA - indexB;
+                const response = await fetch(
+                   `http://localhost:3001/api/items/selected?ids=${Array.from(selectedIds).join(',')}`
+                );
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки');
                 }
                 
-                // Если только один есть в order, он идет первым
-                if (indexA !== -1) return -1;
-                if (indexB !== -1) return 1;
+                const data = await response.json();
+                console.log('Получены выбранные элементы:', data.data);
+
+                const filteredItems = data.data.filter(item => 
+                    selectedIds.has(item.id)
+                );
                 
-                // Иначе сортируем по ID
-                return a.id - b.id;
-            });
-            
-            setItems(sortedItems);
-            console.log('Установлены элементы:', sortedItems.map(item => item.id));
+                console.log('Отфильтрованные элементы:', filteredItems);
+
+                const sortedItems = filteredItems.sort((a, b) => {
+                    const indexA = order.indexOf(a.id);
+                    const indexB = order.indexOf(b.id);
+                    
+                    // Если оба есть в order, сортируем по order
+                    if (indexA !== -1 && indexB !== -1) {
+                    return indexA - indexB;
+                    }
+                    
+                    // Если только один есть в order, он идет первым
+                    if (indexA !== -1) return -1;
+                    if (indexB !== -1) return 1;
+                    
+                    // Иначе сортируем по ID
+                    return a.id - b.id;
+                });
+                
+                setItems(sortedItems);
+                console.log('Установлены элементы:', sortedItems.map(item => item.id));
             } catch (error) {
-            console.error('Ошибка загрузки:', error);
+                console.error('Ошибка загрузки:', error);
             } finally {
-            setIsLoading(false);
+                setIsLoading(false);
             }
         };
 
@@ -95,8 +95,8 @@ const RightPanel = ({ selectedIds, order, onDeselectItem, onReorder }) => {
     }, [selectedIds, order]);
 
     const filteredItems = search 
-    ? items.filter(item => item.id.toString().includes(search))
-    : items;
+        ? items.filter(item => item.id.toString().includes(search))
+        : items;
 
     const handleDragEnd = (event) => {
         const { active, over } = event;
