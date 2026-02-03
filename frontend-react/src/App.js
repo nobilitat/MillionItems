@@ -41,7 +41,7 @@ function App() {
     if (selectedIds.has(itemId)) return;
     
     try {
-      await fetch(`http://localhost:3001/api/items/${itemId}/select`, { 
+      await fetch(`${process.env.REACT_APP_API_BASE_URL}/${itemId}/select`, { 
         method: 'POST' 
       });
 
@@ -60,7 +60,7 @@ function App() {
     if (!selectedIds.has(itemId)) return;
     
     try {
-      await fetch(`http://localhost:3001/api/items/${itemId}/select`, { 
+      await fetch(`${process.env.REACT_APP_API_BASE_URL}/${itemId}/select`, { 
         method: 'DELETE' 
       });
 
@@ -81,7 +81,7 @@ function App() {
   // Добавить элемент
   const handleAddItem = async (customId) => {
     try {
-      const response = await fetch('http://localhost:3001/api/items', {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customId })
@@ -108,7 +108,7 @@ function App() {
     
     console.log('Порядок обновлен:', filteredOrder);
 
-    fetch('http://localhost:3001/api/items/selected/order', {
+    fetch(`${process.env.REACT_APP_API_BASE_URL}/selected/order`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ order: filteredOrder })

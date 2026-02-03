@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const ItemStorage = require('./storage/ItemStorage');
@@ -12,6 +13,11 @@ const storage = new ItemStorage();
 
 app.use(cors());
 app.use(express.json());
+
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = path.join(__dirname, '../../frontend-react/build');
+  app.use(express.static(frontendPath));
+}
 
 app.use((req, res, next) => {
   req.storage = storage;
@@ -29,6 +35,11 @@ app.get('/health', (req, res) => {
   });
 });
 
+if (process.env.NODE_ENV === 'production') {
+  app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(path.join(__dirname, '../../frontend-react/build/index.html'));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`\nServer running on http://localhost:${PORT}`);

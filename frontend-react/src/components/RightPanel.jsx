@@ -49,7 +49,7 @@ const RightPanel = ({ selectedIds, order, onDeselectItem, onReorder }) => {
                 console.log('Загрузка элементов для ID:', selectedArray);
                 
                 const response = await fetch(
-                   `http://localhost:3001/api/items/selected?ids=${Array.from(selectedIds).join(',')}`
+                   `${process.env.REACT_APP_API_BASE_URL}/selected?ids=${Array.from(selectedIds).join(',')}`
                 );
                 
                 if (!response.ok) {

@@ -20,7 +20,7 @@ const LeftPanel = ({ selectedIds, onSelectItem, onAddItem }) => {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/api/items/available?offset=${currentOffset}&limit=20&search=${search}`
+        `${process.env.REACT_APP_API_BASE_URL}/available?offset=${currentOffset}&limit=20&search=${search}`
       );
       const data = await response.json();
 
@@ -112,7 +112,7 @@ const LeftPanel = ({ selectedIds, onSelectItem, onAddItem }) => {
       <div className="list-header">
         <h5 className="mb-0">
           Доступные элементы
-          <span className="badge bg-primary ms-2">{totalCount > 0 ? totalCount - 1 : 0}</span>
+          <span className="badge bg-primary ms-2">{totalCount}</span>
         </h5>
       </div>
 

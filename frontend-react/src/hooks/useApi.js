@@ -1,7 +1,5 @@
 import { useState, useCallback } from 'react';
 
-const API_BASE = 'http://localhost:3001/api/items';
-
 export function useApi() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -11,7 +9,7 @@ export function useApi() {
     setError(null);
     
     try {
-      const url = `${API_BASE}${endpoint}`;
+      const url = `${process.env.REACT_APP_API_BASE_URL}${endpoint}`;
       console.log(`${method} ${url}`, data);
       
       const response = await fetch(url, {
