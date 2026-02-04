@@ -63,11 +63,11 @@ router.get('/selected', (req, res) => {
 });
 
 // Добавление нового элемента
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { customId } = req.body;
-    const newItem = req.storage.addItem(customId);
-    
+
+    const newItem = await req.queue.addToQueue('add', customId);
     res.json({
       success: true,
       data: newItem

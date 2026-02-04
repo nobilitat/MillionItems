@@ -8,7 +8,8 @@ const LeftPanel = ({ selectedIds, onSelectItem, onAddItem }) => {
   const [newItemId, setNewItemId] = useState("");
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const [totalCount, setTotalCount] = useState(0); // Новое состояние
+  const [totalCount, setTotalCount] = useState(0);
+  const [isAdding, setIsAdding] = useState(false);
 
   const listRef = useRef(null);
   const searchTimeoutRef = useRef(null);
@@ -90,16 +91,24 @@ const LeftPanel = ({ selectedIds, onSelectItem, onAddItem }) => {
 
   // Обработчик добавления
   const handleAdd = async () => {
-    if (!newItemId.trim()) return;
+    if (!newItemId.trim() || isAdding) return;
 
     const id = parseInt(newItemId);
     if (isNaN(id) || id < 1) return;
 
-    await onAddItem(id);
-    setNewItemId("");
-    setOffset(0);
-    setHasMore(true);
-    loadItems(true);
+    try {
+      setIsAdding(true);
+
+      await onAddItem(id);
+      setNewItemId("");
+      setOffset(0);
+      setHasMore(true);
+      loadItems(true);
+    }
+    finally
+    {
+      setIsAdding(false);
+    }
   };
 
   // Обработчик выбора
@@ -155,9 +164,21 @@ const LeftPanel = ({ selectedIds, onSelectItem, onAddItem }) => {
           <Button
             variant="success"
             onClick={handleAdd}
-            disabled={!newItemId.trim()}
+            disabled={!newItemId.trim() || isAdding}
+            style={{ minWidth: '120px' }}
           >
-            Добавить
+            {isAdding ? (
+              <>
+                <span
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                Ожидание...
+              </>
+            ) : (
+              "Добавить"
+            )}
           </Button>
         </InputGroup>
       </div>

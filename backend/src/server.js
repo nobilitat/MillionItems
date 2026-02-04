@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
+const QueueManager = require('./storage/QueueManager')
 const ItemStorage = require('./storage/ItemStorage');
 const itemsRouter = require('./routes/items');
 
@@ -10,6 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 const storage = new ItemStorage();
+const queueManager = new QueueManager(storage);
 
 app.use(cors());
 app.use(express.json());
@@ -21,6 +23,7 @@ if (process.env.NODE_ENV === 'production') {
 
 app.use((req, res, next) => {
   req.storage = storage;
+  req.queue = queueManager;
   next();
 });
 
