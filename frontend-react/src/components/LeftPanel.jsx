@@ -13,12 +13,16 @@ const LeftPanel = ({ selectedIds, onSelectItem, onAddItem }) => {
 
   const listRef = useRef(null);
   const searchTimeoutRef = useRef(null);
+  const isFetching = useRef(false);
 
   // Загрузка элементов
   const loadItems = async (reset = false) => {
-    const currentOffset = reset ? 0 : offset;
+    if (isFetching.current) return;
     if (!reset && !hasMore) return;
-
+    
+    isFetching.current = true;
+    const currentOffset = reset ? 0 : offset;
+    
     try {
       const response = await fetch(
         `${process.env.REACT_APP_API_BASE_URL}/available?offset=${currentOffset}&limit=20&search=${search}`
@@ -35,6 +39,9 @@ const LeftPanel = ({ selectedIds, onSelectItem, onAddItem }) => {
       setOffset(currentOffset + data.data.length);
     } catch (error) {
       console.error("Ошибка загрузки:", error);
+    }
+    finally {
+      isFetching.current = false;
     }
   };
 
