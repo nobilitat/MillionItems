@@ -2,19 +2,23 @@ const express = require('express');
 const router = express.Router();
 
 // Получение доступных элементов
-router.get('/available', (req, res) => {
+router.get('/available', async (req, res) => {
   try {
     const { offset = 0, limit = 20, search = '' } = req.query;
-    
-    const items = req.storage.getAvailableItems(
-      parseInt(offset),
-      parseInt(limit),
-      search
-    );
-    
+
+    const cacheKey = `available_${offset}_${limit}_${search}`;
+
+    const items = await req.queue.addToQueue('get', cacheKey, {
+      fn: () => req.storage.getAvailableItems(
+        parseInt(offset),
+        parseInt(limit),
+        search
+      )
+    });
+
     // Для инфинити-скролла нужно знать общее количество
     const total = req.storage.getStats().totalItems - req.storage.data.selected.items.size;
-    
+
     res.json({
       success: true,
       data: items,
@@ -34,24 +38,17 @@ router.get('/available', (req, res) => {
 });
 
 // Получение выбранных элементов
-router.get('/selected', (req, res) => {
+router.get('/selected', async (req, res) => {
   try {
-    const { offset = 0, limit = 20, search = '' } = req.query;
-    
-    const items = req.storage.getSelectedItems(
-      parseInt(offset),
-      parseInt(limit),
-      search
-    );
+    const items = await req.queue.addToQueue('get', 'all_selected', {
+      fn: () => req.storage.getSelectedItems()
+    });
     
     res.json({
       success: true,
       data: items,
       pagination: {
-        offset: parseInt(offset),
-        limit: parseInt(limit),
-        total: req.storage.data.selected.items.size,
-        hasMore: (parseInt(offset) + parseInt(limit)) < req.storage.data.selected.items.size
+        total: req.storage.data.selected.items.size
       }
     });
   } catch (error) {
@@ -81,11 +78,11 @@ router.post('/', async (req, res) => {
 });
 
 // Добавление элемента в выбранные
-router.post('/:id/select', (req, res) => {
+router.post('/:id/select', async (req, res) => {
   try {
     const { id } = req.params;
-    req.storage.addToSelected(parseInt(id));
-    
+    await req.queue.addToQueue('update', parseInt(id), { action: 'select' });
+
     res.json({
       success: true,
       message: `Item ${id} added to selected`
@@ -99,11 +96,11 @@ router.post('/:id/select', (req, res) => {
 });
 
 // Удаление из выбранных
-router.delete('/:id/select', (req, res) => {
+router.delete('/:id/select', async (req, res) => {
   try {
     const { id } = req.params;
-    req.storage.removeFromSelected(parseInt(id));
-    
+    await req.queue.addToQueue('update', parseInt(id), { action: 'deselect' });
+
     res.json({
       success: true,
       message: `Item ${id} removed from selected`
@@ -117,16 +114,16 @@ router.delete('/:id/select', (req, res) => {
 });
 
 // Обновление порядка выбранных (Drag&Drop)
-router.put('/selected/order', (req, res) => {
+router.put('/selected/order', async (req, res) => {
   try {
     const { order } = req.body; // [id1, id2, id3, ...]
-    
+
     if (!Array.isArray(order)) {
       throw new Error('Order must be an array');
     }
-    
-    req.storage.updateSelectedOrder(order.map(id => parseInt(id)));
-    
+
+    await req.queue.addToQueue('update', order.map(id => parseInt(id)), { action: 'reorder' });
+
     res.json({
       success: true,
       message: 'Order updated successfully'
