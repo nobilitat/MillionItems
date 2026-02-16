@@ -1,3 +1,7 @@
+const { Worker } = require('worker_threads');
+const path = require('path');
+const crypto = require('crypto');
+
 class ItemStorage {
     constructor() {
         this.data = {
@@ -10,6 +14,21 @@ class ItemStorage {
         };
 
         this.initializeData();
+
+        this.worker = new Worker(path.resolve(__dirname, 'search.worker.js'));
+        this.pendingSearches = new Map();
+
+        this.worker.on('message', (message) => {
+            if (message.type === 'search_result' && this.pendingSearches.has(message.requestId)) {
+                const { resolve } = this.pendingSearches.get(message.requestId);
+                resolve(message.payload);
+                this.pendingSearches.delete(message.requestId);
+            }
+        });
+
+        this.worker.on('error', (err) => {
+            console.error('Worker error:', err);
+        });
     }
 
     initializeData() {
@@ -26,35 +45,30 @@ class ItemStorage {
         console.log(`Initialized ${this.data.allItems.size} items`);
     }
 
-    getAvailableItems(offset = 0, limit = 20, search = '') {
-        const result = [];
-        let count = 0;
-        let skipped = 0;
+    async getAvailableItems(offset = 0, limit = 20, search = '') {
+ 
+        return new Promise((resolve, reject) => {
+            const requestId = crypto.randomBytes(16).toString('hex');
+            this.pendingSearches.set(requestId, { resolve, reject });
 
-        for (const [id, item] of this.data.allItems) {
-            // Пропускаем выбранные
-            if (this.data.selected.items.has(id)) {
-                continue;
-            }
+            this.worker.postMessage({
+                type: 'search',
+                requestId,
+                payload: {
+                    offset,
+                    limit,
+                    search,
+                    selectedIds: Array.from(this.data.selected.items.keys())
+                }
+            });
 
-            if (search && !id.toString().includes(search)) {
-                continue;
-            }
-
-            if (skipped < offset) {
-                skipped++;
-                continue;
-            }
-
-            if (count < limit) {
-                result.push(item);
-                count++;
-            } else {
-                break;
-            }
-        }
-
-        return result;
+            setTimeout(() => {
+                if (this.pendingSearches.has(requestId)) {
+                    reject(new Error('Search timed out'));
+                    this.pendingSearches.delete(requestId);
+                }
+            }, 10000);
+        });
     }
 
     getSelectedItems(offset = 0, limit = 20, search = '') {
@@ -96,6 +110,12 @@ class ItemStorage {
         };
 
         this.data.allItems.set(id, newItem);
+
+        this.worker.postMessage({
+            type: 'add',
+            payload: newItem
+        });
+
         return newItem;
     }
 

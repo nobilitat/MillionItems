@@ -71,9 +71,9 @@ class QueueManager {
     }
 
     else if (type === 'get') {
-      items.forEach(([key, { resolve, reject, data }]) => {
+      items.forEach(async ([key, { resolve, reject, data }]) => {
         try {
-          const result = data.fn();
+          const result = await data.fn();
           resolve(result);
         } catch (err) {
           reject(err);
